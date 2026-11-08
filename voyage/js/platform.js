@@ -171,7 +171,7 @@ function initWx() {
 // —— 浏览器预览 ——
 function initWeb() {
   const canvas = document.createElement('canvas');
-  canvas.style.position = 'absolute';
+  canvas.style.position = 'fixed';
   canvas.style.left = '0';
   canvas.style.top = '0';
   canvas.style.touchAction = 'none';
@@ -180,24 +180,41 @@ function initWeb() {
   platform.canvas = canvas;
   platform.ctx = canvas.getContext('2d');
 
+  // 用一个探测元素读取刘海屏、系统栏的安全区，画面只铺在安全区内
+  const probe = document.createElement('div');
+  probe.style.cssText =
+    'position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;' +
+    'padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);';
+  document.body.appendChild(probe);
+  const box = { x: 0, y: 0, w: 0, h: 0 };
+
   const layout = () => {
-    const iw = window.innerWidth, ih = window.innerHeight;
-    platform.rotated = ih > iw;
-    platform.width = platform.rotated ? ih : iw;
-    platform.height = platform.rotated ? iw : ih;
+    const cs = window.getComputedStyle(probe);
+    const inset = (k) => parseFloat(cs[k]) || 0;
+    const l = inset('paddingLeft'), r = inset('paddingRight'), t = inset('paddingTop'), b = inset('paddingBottom');
+    box.x = l;
+    box.y = t;
+    box.w = Math.max(1, window.innerWidth - l - r);
+    box.h = Math.max(1, window.innerHeight - t - b);
+    platform.rotated = box.h > box.w;
+    platform.width = platform.rotated ? box.h : box.w;
+    platform.height = platform.rotated ? box.w : box.h;
     platform.dpr = Math.min(window.devicePixelRatio || 1, 3);
     canvas.width = Math.round(platform.width * platform.dpr);
     canvas.height = Math.round(platform.height * platform.dpr);
     canvas.style.width = platform.width + 'px';
     canvas.style.height = platform.height + 'px';
-    canvas.style.transform = platform.rotated ? `translate(${iw}px, 0) rotate(90deg)` : 'none';
+    canvas.style.transform = platform.rotated
+      ? `translate(${box.x + box.w}px, ${box.y}px) rotate(90deg)`
+      : `translate(${box.x}px, ${box.y}px)`;
     for (const fn of listeners.resize) fn();
   };
   layout();
   window.addEventListener('resize', layout);
 
+  // 屏幕坐标 -> 游戏坐标（竖屏时画面旋转了 90 度）
   const toGame = (cx, cy) =>
-    platform.rotated ? { x: cy, y: window.innerWidth - cx } : { x: cx, y: cy };
+    platform.rotated ? { x: cy - box.y, y: box.x + box.w - cx } : { x: cx - box.x, y: cy - box.y };
 
   const down = new Set();
   canvas.addEventListener('pointerdown', (e) => {

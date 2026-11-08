@@ -41,3 +41,15 @@ const html = `<!doctype html>
 const out = path.join(outDir, 'yuanyangzhi-web.html');
 fs.writeFileSync(out, html);
 console.log(`输出 ${out}（${(html.length / 1024).toFixed(0)} KB）`);
+
+// 不带 html/head/body 外壳的版本，用于会自动套外壳的网页托管平台
+const fragment = `<title>远洋志 试玩版</title>
+<style>
+  :root { --bg: #3a2614; color-scheme: dark; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); }
+</style>
+<script>${js}</script>
+`;
+const out2 = path.join(outDir, 'yuanyangzhi-page.html');
+fs.writeFileSync(out2, fragment);
+console.log(`输出 ${out2}`);
