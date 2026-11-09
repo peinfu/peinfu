@@ -1,8 +1,8 @@
-# 远洋志（微信小游戏）
+# 大航海·启航（微信小游戏）
 
 大航海题材的原创微信小游戏。玩家扮演十六世纪初的一名年轻船长，在欧洲、地中海、非洲和印度洋之间跑商、探索未知海域、与海盗交战，寻找绕过非洲通往印度和香料群岛的航路。
 
-> 游戏名「远洋志」是暂定名，修改 `js/scenes/title.js` 里的标题文字即可。
+> 标题画面上的游戏名在 `js/scenes/title.js` 顶部修改。注意不要使用「大航海时代」：那是光荣特库摩的游戏系列名，用了过不了微信审核。
 
 ## 试玩版 0.2 的内容
 
@@ -43,7 +43,7 @@ python3 -m http.server 8000
 ```bash
 cd tools
 npm install
-npm run web      # 输出 dist/yuanyangzhi-web.html
+npm run web      # 输出 dist/dahanghai-qihang-web.html
 ```
 
 ## 目录结构

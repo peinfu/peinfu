@@ -6,6 +6,10 @@ import { drawSideShip } from '../render/sprites.js';
 import { img, sound } from '../assets.js';
 import { HELP_TEXT } from './help.js';
 
+// 游戏名：大航海·启航
+const TITLE_MAIN = '大 航 海';
+const TITLE_SUB = '启 航';
+
 export class TitleScene {
   constructor(game) {
     this.game = game;
@@ -44,31 +48,47 @@ export class TitleScene {
       v.addColorStop(1, 'rgba(90, 59, 30, 0.6)');
       ctx.fillStyle = v;
       ctx.fillRect(0, 0, W, H);
-      drawSideShip(ctx, 'carrack', W * 0.56, H * 0.86, 190, 1, this.t, { cross: true });
+      drawSideShip(ctx, 'carrack', W * 0.56, H - sf.b - 110, Math.min(190, H * 0.12), 1, this.t, { cross: true });
     }
 
     // 标题牌
     const cx = W / 2, ty = Math.max(sf.t + 60, H * 0.12);
     ctx.fillStyle = 'rgba(242, 230, 196, 0.9)';
-    ui.roundRect(cx - 300, ty, 600, 250, 20);
+    ui.roundRect(cx - 300, ty, 600, 320, 20);
     ctx.fill();
     ctx.strokeStyle = C.wood;
     ctx.lineWidth = 5;
     ctx.stroke();
     ctx.lineWidth = 2;
-    ui.roundRect(cx - 288, ty + 12, 576, 226, 14);
+    ui.roundRect(cx - 288, ty + 12, 576, 296, 14);
     ctx.stroke();
-    ctx.font = font(118, true);
+    ctx.font = font(116, true);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = C.redDark;
-    ctx.fillText('远 洋 志', cx + 4, ty + 108);
+    ctx.fillText(TITLE_MAIN, cx + 4, ty + 104);
     ctx.fillStyle = C.ink;
-    ctx.fillText('远 洋 志', cx, ty + 104);
-    ui.text('— 寻找通往东方的航路 —', cx, ty + 200, { size: 30, color: C.inkSoft, align: 'center' });
+    ctx.fillText(TITLE_MAIN, cx, ty + 100);
+    // 副标题“启航”做成红色绶带
+    ctx.strokeStyle = C.red;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx - 230, ty + 196);
+    ctx.lineTo(cx - 120, ty + 196);
+    ctx.moveTo(cx + 120, ty + 196);
+    ctx.lineTo(cx + 230, ty + 196);
+    ctx.stroke();
+    ctx.fillStyle = C.red;
+    ui.roundRect(cx - 110, ty + 164, 220, 64, 10);
+    ctx.fill();
+    ctx.strokeStyle = C.redDark;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ui.text(TITLE_SUB, cx, ty + 197, { size: 42, bold: true, color: C.btnText, align: 'center' });
+    ui.text('寻找通往东方的航路', cx, ty + 270, { size: 28, color: C.inkSoft, align: 'center' });
 
     const bw = 440, bh = 100;
-    let by = ty + 330;
+    let by = ty + 400;
     if (this.save) {
       ui.button(cx - bw / 2, by, bw, bh, '继续航海', () => this.continueGame(), { style: 'primary', size: 38 });
       by += bh + 28;

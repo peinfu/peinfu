@@ -1,8 +1,8 @@
 {
-  "description": "远洋志：大航海题材微信小游戏",
+  "description": "大航海·启航：大航海题材微信小游戏",
   "compileType": "game",
   "appid": "touristappid",
-  "projectname": "yuanyangzhi",
+  "projectname": "dahanghai-qihang",
   "packOptions": {
     "ignore": [
       {
