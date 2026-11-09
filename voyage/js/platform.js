@@ -9,11 +9,10 @@ export const platform = {
   isWx,
   canvas: null,
   ctx: null,
-  width: 0, // 横屏逻辑尺寸（CSS 像素）
+  width: 0, // 画面尺寸（CSS 像素），竖屏
   height: 0,
   dpr: 1,
-  safe: { left: 0, right: 0, top: 0, bottom: 0 },
-  rotated: false, // 浏览器竖屏时把画面旋转 90 度
+  safe: { left: 0, right: 0, top: 0, bottom: 0 }, // 刘海、系统栏、右上角胶囊按钮占用的边距
 
   init() {
     if (isWx) initWx();
@@ -139,14 +138,21 @@ function initWx() {
   platform.ctx = canvas.getContext('2d');
 
   const sa = info.safeArea;
+  const cap = (v, m) => Math.max(0, Math.min(v || 0, m));
   if (sa && sa.width > 0) {
-    const cap = (v) => Math.max(0, Math.min(v, 64));
     platform.safe = {
-      left: cap(sa.left),
-      right: cap(platform.width - sa.right),
-      top: cap(sa.top),
-      bottom: cap(platform.height - sa.bottom),
+      left: cap(sa.left, 60),
+      right: cap(platform.width - sa.right, 60),
+      top: cap(sa.top, 80),
+      bottom: cap(platform.height - sa.bottom, 60),
     };
+  }
+  // 右上角的胶囊按钮（“···”和关闭）会盖住画面，顶部界面要放在它下面
+  try {
+    const mb = wx.getMenuButtonBoundingClientRect();
+    if (mb && mb.bottom > 0) platform.safe.top = Math.max(platform.safe.top, cap(mb.bottom + 6, 140));
+  } catch (e) {
+    /* 忽略 */
   }
 
   const conv = (e) =>
@@ -192,29 +198,28 @@ function initWeb() {
     const cs = window.getComputedStyle(probe);
     const inset = (k) => parseFloat(cs[k]) || 0;
     const l = inset('paddingLeft'), r = inset('paddingRight'), t = inset('paddingTop'), b = inset('paddingBottom');
-    box.x = l;
+    let w = Math.max(1, window.innerWidth - l - r);
+    const h = Math.max(1, window.innerHeight - t - b);
+    // 竖屏游戏：窗口太宽时（电脑或横着拿手机），在中间显示一个竖长的画面
+    if (w > h * 0.62) w = Math.round(h * 0.5625);
+    box.w = w;
+    box.h = h;
+    box.x = l + (window.innerWidth - l - r - w) / 2;
     box.y = t;
-    box.w = Math.max(1, window.innerWidth - l - r);
-    box.h = Math.max(1, window.innerHeight - t - b);
-    platform.rotated = box.h > box.w;
-    platform.width = platform.rotated ? box.h : box.w;
-    platform.height = platform.rotated ? box.w : box.h;
+    platform.width = box.w;
+    platform.height = box.h;
     platform.dpr = Math.min(window.devicePixelRatio || 1, 3);
     canvas.width = Math.round(platform.width * platform.dpr);
     canvas.height = Math.round(platform.height * platform.dpr);
     canvas.style.width = platform.width + 'px';
     canvas.style.height = platform.height + 'px';
-    canvas.style.transform = platform.rotated
-      ? `translate(${box.x + box.w}px, ${box.y}px) rotate(90deg)`
-      : `translate(${box.x}px, ${box.y}px)`;
+    canvas.style.transform = `translate(${box.x}px, ${box.y}px)`;
     for (const fn of listeners.resize) fn();
   };
   layout();
   window.addEventListener('resize', layout);
 
-  // 屏幕坐标 -> 游戏坐标（竖屏时画面旋转了 90 度）
-  const toGame = (cx, cy) =>
-    platform.rotated ? { x: cy - box.y, y: box.x + box.w - cx } : { x: cx - box.x, y: cy - box.y };
+  const toGame = (cx, cy) => ({ x: cx - box.x, y: cy - box.y });
 
   const down = new Set();
   canvas.addEventListener('pointerdown', (e) => {

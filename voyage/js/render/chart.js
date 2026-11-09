@@ -54,7 +54,8 @@ export class Chart {
   setView(W, H) {
     this.W = W;
     this.H = H;
-    this.minZoom = Math.max(W / WORLD_W, H / WORLD_H);
+    // 竖屏时允许缩小到能看到整张图的东西两端，上下多出的部分画成羊皮纸边框
+    this.minZoom = Math.min(W / WORLD_W, H / WORLD_H);
     this.clampCam();
   }
 
@@ -68,8 +69,8 @@ export class Chart {
   clampCam() {
     const z = (this.cam.zoom = clamp(this.cam.zoom, this.minZoom, this.maxZoom));
     const hw = this.W / 2 / z, hh = this.H / 2 / z;
-    this.cam.x = clamp(this.cam.x, hw, Math.max(hw, WORLD_W - hw));
-    this.cam.y = clamp(this.cam.y, hh, Math.max(hh, WORLD_H - hh));
+    this.cam.x = hw * 2 >= WORLD_W ? WORLD_W / 2 : clamp(this.cam.x, hw, WORLD_W - hw);
+    this.cam.y = hh * 2 >= WORLD_H ? WORLD_H / 2 : clamp(this.cam.y, hh, WORLD_H - hh);
   }
 
   toScreen(x, y) {
@@ -247,6 +248,20 @@ export class Chart {
     drawRose(ctx, DECOR_ROSE[0], DECOR_ROSE[1], 120);
     ctx.restore();
 
+    // 地图边界以外画成羊皮纸边框
+    const [bx0, by0] = this.toScreen(0, 0);
+    const [bx1, by1] = this.toScreen(WORLD_W, WORLD_H);
+    if (bx0 > 0 || by0 > 0 || bx1 < W || by1 < H) {
+      ctx.fillStyle = C.parchmentDark;
+      if (by0 > 0) ctx.fillRect(0, 0, W, by0);
+      if (by1 < H) ctx.fillRect(0, by1, W, H - by1);
+      if (bx0 > 0) ctx.fillRect(0, 0, bx0, H);
+      if (bx1 < W) ctx.fillRect(bx1, 0, W - bx1, H);
+      ctx.strokeStyle = C.wood;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(bx0, by0, bx1 - bx0, by1 - by0);
+    }
+
     if (o.ports !== false && state) this.drawPorts(ctx, state, o);
     if (state) this.drawDiscoveries(ctx, state);
   }
@@ -259,7 +274,7 @@ export class Chart {
       const [x, y] = this.toScreen(wx, wy);
       if (x < -60 || y < -40 || x > this.W + 60 || y > this.H + 40) continue;
       const hl = o.highlight === id;
-      const r = p.size === 3 ? 9 : p.size === 2 ? 7.5 : 6;
+      const r = p.size === 3 ? 11 : p.size === 2 ? 9 : 7.5;
       ctx.fillStyle = hl ? C.gold : C.red;
       ctx.strokeStyle = C.parchment;
       ctx.lineWidth = 2.5;
@@ -269,13 +284,13 @@ export class Chart {
       ctx.stroke();
       ctx.fillStyle = C.ink;
       ctx.beginPath();
-      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.arc(x, y, 3, 0, Math.PI * 2);
       ctx.fill();
-      if (z >= 0.8 || (z >= 0.5 && p.size >= 2) || p.size === 3 || hl) {
-        ctx.font = font(hl ? 22 : 19, true);
+      if (z >= 0.8 || (z >= 0.5 && p.size >= 2) || (z >= 0.36 && p.size === 3) || hl) {
+        ctx.font = font(hl ? 28 : 24, true);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 5;
         ctx.strokeStyle = 'rgba(242, 230, 196, 0.9)';
         ctx.strokeText(p.name, x, y + r + 3);
         ctx.fillStyle = state.visited.indexOf(id) >= 0 ? C.ink : C.redDark;
@@ -291,20 +306,20 @@ export class Chart {
       if (!d || d.special) continue;
       const [x, y] = this.lonLatToScreen(d.lon, d.lat);
       if (x < -40 || y < -40 || x > this.W + 40 || y > this.H + 40) continue;
-      drawStar(ctx, x, y, 8, C.gold);
+      drawStar(ctx, x, y, 10, C.gold);
       if (this.cam.zoom >= 0.9) {
-        ctx.font = font(16, false);
+        ctx.font = font(20, false);
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillStyle = C.inkSoft;
-        ctx.fillText(d.name, x, y - 9);
+        ctx.fillText(d.name, x, y - 11);
       }
     }
   }
 
   // 找到点击位置附近的已知港口
   portAt(state, sx, sy) {
-    let best = null, bestD = 40;
+    let best = null, bestD = 46;
     for (const id of state.known) {
       const [x, y] = this.toScreen(PORT_PROJ[id][0], PORT_PROJ[id][1]);
       const d = Math.hypot(x - sx, y - sy);

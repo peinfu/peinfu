@@ -4,14 +4,15 @@
 import { platform } from './platform.js';
 
 export const IMAGES = {
-  title_bg: null, // 标题画面背景，建议 1920×1080
-  port_europe: null, // 港口背景：欧洲（北欧、伊比利亚），建议 1920×1080
-  port_med: null, // 港口背景：地中海
-  port_islands: null, // 港口背景：大西洋诸岛
-  port_africa: null, // 港口背景：非洲
-  port_arabia: null, // 港口背景：阿拉伯
-  port_india: null, // 港口背景：印度与东南亚
-  battle_bg: null, // 海战背景，建议 1920×1080
+  title_bg: null, // 标题画面背景（竖屏），建议 1080×1920
+  // 港口插画显示在画面上半部分，高度随手机比例变化，会按比例裁切，建议 1500×1300
+  port_europe: null, // 港口插画：欧洲（北欧、伊比利亚）
+  port_med: null, // 港口插画：地中海
+  port_islands: null, // 港口插画：大西洋诸岛
+  port_africa: null, // 港口插画：非洲
+  port_arabia: null, // 港口插画：阿拉伯
+  port_india: null, // 港口插画：印度与东南亚
+  battle_bg: null, // 海战背景（竖屏），建议 1080×1920
   // 航海图上的船（俯视或斜视，船头朝右），建议 128×128 透明 PNG
   map_ship: null,
   // 海战中的船（侧视，船头朝右），建议 512×512 透明 PNG

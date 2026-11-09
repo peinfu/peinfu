@@ -6,8 +6,8 @@ export function openMenu(game) {
   const s = game.state;
   const d = game.dialog({
     title: '菜单',
-    w: 440,
-    bodyH: 4 * 70,
+    w: 540,
+    bodyH: 4 * 96,
     buttons: [{ label: '关闭', style: 'light' }],
     draw: (ui, x, y, w) => {
       const items = [
@@ -30,7 +30,7 @@ export function openMenu(game) {
           game.go('title');
         }],
       ];
-      items.forEach(([lb, fn], i) => ui.button(x + 20, y + i * 70, w - 40, 58, lb, fn, { size: 24, style: i === 3 ? 'light' : undefined }));
+      items.forEach(([lb, fn], i) => ui.button(x + 20, y + i * 96, w - 40, 80, lb, fn, { size: 30, style: i === 3 ? 'light' : undefined }));
     },
   });
 }

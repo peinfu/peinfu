@@ -188,7 +188,7 @@ export class UI {
   text(str, x, y, opts) {
     const o = opts || {};
     const ctx = this.ctx;
-    ctx.font = font(o.size || 24, o.bold);
+    ctx.font = font(o.size || 28, o.bold);
     ctx.fillStyle = o.color || C.ink;
     ctx.textAlign = o.align || 'left';
     ctx.textBaseline = o.baseline || 'middle';
@@ -210,7 +210,7 @@ export class UI {
   // 多行文字，返回总高度
   textWrap(str, x, y, w, opts) {
     const o = opts || {};
-    const size = o.size || 22;
+    const size = o.size || 26;
     const lh = o.lineH || Math.round(size * 1.5);
     const ctx = this.ctx;
     ctx.font = font(size, o.bold);
@@ -242,15 +242,15 @@ export class UI {
     this.roundRect(x + 7, y + 7, w - 14, h - 14, 9);
     ctx.stroke();
     if (o.title) {
-      const tw = Math.max(200, this.measure(o.title, 28, true) + 80);
-      const tx = x + (w - tw) / 2, ty = y - 22;
+      const tw = Math.max(240, this.measure(o.title, 32, true) + 90);
+      const tx = x + (w - tw) / 2, ty = y - 26;
       ctx.fillStyle = C.red;
-      this.roundRect(tx, ty, tw, 46, 8);
+      this.roundRect(tx, ty, tw, 54, 9);
       ctx.fill();
       ctx.strokeStyle = C.redDark;
       ctx.lineWidth = 2;
       ctx.stroke();
-      this.text(o.title, x + w / 2, ty + 23, { size: 28, bold: true, color: C.btnText, align: 'center' });
+      this.text(o.title, x + w / 2, ty + 27, { size: 32, bold: true, color: C.btnText, align: 'center' });
     }
   }
 
@@ -284,7 +284,7 @@ export class UI {
       ctx.stroke();
     }
     const tc = o.style === 'light' ? C.ink : C.btnText;
-    const size = o.size || 26;
+    const size = o.size || 30;
     if (o.sub) {
       this.text(label, x + w / 2, y + dy + h * 0.36, { size, bold: true, color: tc, align: 'center', maxW: w - 12 });
       this.text(o.sub, x + w / 2, y + dy + h * 0.72, { size: Math.round(size * 0.68), color: tc, align: 'center', maxW: w - 12 });
@@ -297,7 +297,7 @@ export class UI {
 
   closeButton(x, y, onTap) {
     const ctx = this.ctx;
-    const r = 26;
+    const r = 30;
     const pressed = this.isPressed(x - r, y - r, r * 2, r * 2);
     ctx.fillStyle = pressed ? C.redDark : C.red;
     ctx.beginPath();
@@ -307,10 +307,10 @@ export class UI {
     ctx.lineWidth = 3;
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(x - 9, y - 9);
-    ctx.lineTo(x + 9, y + 9);
-    ctx.moveTo(x + 9, y - 9);
-    ctx.lineTo(x - 9, y + 9);
+    ctx.moveTo(x - 10, y - 10);
+    ctx.lineTo(x + 10, y + 10);
+    ctx.moveTo(x + 10, y - 10);
+    ctx.lineTo(x - 10, y + 10);
     ctx.stroke();
     this.tap(x - r, y - r, r * 2, r * 2, onTap);
   }
@@ -326,7 +326,7 @@ export class UI {
       ctx.strokeStyle = C.wood;
       ctx.lineWidth = 2;
       ctx.stroke();
-      this.text(lb, x + i * tw + tw / 2, y + h / 2 + 1, { size: 24, bold: on, color: on ? C.btnText : C.ink, align: 'center' });
+      this.text(lb, x + i * tw + tw / 2, y + h / 2 + 1, { size: 28, bold: on, color: on ? C.btnText : C.ink, align: 'center' });
       if (!on) this.tap(x + i * tw, y, tw, h, () => onChange(i)).label = lb;
     });
   }
@@ -351,20 +351,20 @@ export class UI {
     const t = max <= min ? 0 : (value - min) / range;
     const cy = y + h / 2;
     ctx.fillStyle = 'rgba(90, 59, 30, 0.3)';
-    this.roundRect(x, cy - 6, w, 12, 6);
+    this.roundRect(x, cy - 7, w, 14, 7);
     ctx.fill();
     ctx.fillStyle = C.red;
-    this.roundRect(x, cy - 6, Math.max(12, w * t), 12, 6);
+    this.roundRect(x, cy - 7, Math.max(14, w * t), 14, 7);
     ctx.fill();
     ctx.fillStyle = C.parchment;
     ctx.strokeStyle = C.wood;
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.arc(x + w * t, cy, 18, 0, Math.PI * 2);
+    ctx.arc(x + w * t, cy, 24, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
     if (max > min) {
-      this.drag(x - 20, y - 10, w + 40, h + 20, (px) => {
+      this.drag(x - 28, y - 14, w + 56, h + 28, (px) => {
         const v = Math.round(min + clamp((px - x) / w, 0, 1) * range);
         if (v !== value) onChange(v);
         value = v;

@@ -12,7 +12,7 @@ import { SeaScene } from './scenes/sea.js';
 import { BattleScene } from './scenes/battle.js';
 
 export const GAME_TITLE = '远洋志';
-export const DESIGN_H = 640; // 设计高度（逻辑像素），宽度随屏幕比例变化
+export const DESIGN_W = 750; // 设计宽度（逻辑像素，与小程序 rpx 一致），高度随屏幕比例变化
 
 export class Game {
   constructor() {
@@ -54,15 +54,15 @@ export class Game {
   }
 
   layout() {
-    this.scale = platform.height / DESIGN_H;
-    this.W = platform.width / this.scale;
-    this.H = DESIGN_H;
+    this.scale = platform.width / DESIGN_W;
+    this.W = DESIGN_W;
+    this.H = platform.height / this.scale;
     const s = platform.safe;
     this.safe = {
-      l: Math.max(16, s.left / this.scale),
-      r: Math.max(16, s.right / this.scale),
-      t: Math.max(8, s.top / this.scale),
-      b: Math.max(8, s.bottom / this.scale),
+      l: Math.max(24, s.left / this.scale),
+      r: Math.max(24, s.right / this.scale),
+      t: Math.max(20, s.top / this.scale),
+      b: Math.max(16, s.bottom / this.scale),
     };
     this.chart.setView(this.W, this.H);
     if (this.scene && this.scene.resize) this.scene.resize();
@@ -147,10 +147,10 @@ export class Game {
     ctx.fillStyle = C.overlay;
     ctx.fillRect(0, 0, W, H);
     ui.block(0, 0, W, H);
-    const x = safe.l + 8, y = 40, w = W - safe.l - safe.r - 16, h = H - y - 14;
+    const x = 14, y = safe.t + 36, w = W - 28, h = H - y - safe.b - 10;
     ui.panel(x, y, w, h, { title: p.title });
-    p.render(ui, ctx, x + 22, y + 34, w - 44, h - 50);
-    ui.closeButton(x + w - 14, y + 14, () => this.closePanel());
+    p.render(ui, ctx, x + 22, y + 48, w - 44, h - 70);
+    ui.closeButton(x + w - 18, y + 18, () => this.closePanel());
   }
 
   renderDialog(ctx, d) {
@@ -159,12 +159,12 @@ export class Game {
     ctx.fillStyle = C.overlay;
     ctx.fillRect(0, 0, W, H);
     ui.block(0, 0, W, H);
-    const w = Math.min(d.w || 620, W - 60);
-    const textH = d.text ? ui.textWrap(d.text, 0, 0, w - 80, { size: 24, draw: false }) : 0;
+    const w = Math.min(d.w || 660, W - 48);
+    const textH = d.text ? ui.textWrap(d.text, 0, 0, w - 80, { size: 28, draw: false }) : 0;
     const body = textH + (d.bodyH || 0);
-    const btnH = d.buttons.length ? 84 : 24;
-    const top = d.title ? 50 : 34;
-    const h = Math.min(H - 70, top + body + btnH + 16);
+    const btnH = d.buttons.length ? 104 : 24;
+    const top = d.title ? 62 : 40;
+    const h = Math.min(H - this.safe.t - this.safe.b - 80, top + body + btnH + 16);
     const x = (W - w) / 2, y = (H - h) / 2 + (d.title ? 12 : 0);
     ui.panel(x, y, w, h, { title: d.title });
     const availH = h - top - btnH - 10;
@@ -172,45 +172,48 @@ export class Game {
     if (body > availH) {
       const off = ui.beginScroll('dlg', x + 20, cy, w - 40, availH, body);
       let yy = cy - off;
-      if (d.text) yy += ui.textWrap(d.text, x + 40, yy, w - 80, { size: 24 });
+      if (d.text) yy += ui.textWrap(d.text, x + 40, yy, w - 80, { size: 28 });
       if (d.draw) d.draw(ui, x + 30, yy + 6, w - 60, d.bodyH || 0);
       ui.endScroll();
     } else {
-      if (d.text) cy += ui.textWrap(d.text, x + 40, cy, w - 80, { size: 24 });
+      if (d.text) cy += ui.textWrap(d.text, x + 40, cy, w - 80, { size: 28 });
       if (d.draw) d.draw(ui, x + 30, cy + 6, w - 60, d.bodyH || 0);
     }
     const n = d.buttons.length;
     if (n) {
       const gap = 18;
-      const bw = Math.min(230, (w - 60 - gap * (n - 1)) / n);
+      const bw = Math.min(260, (w - 60 - gap * (n - 1)) / n);
       let bx = x + (w - (bw * n + gap * (n - 1))) / 2;
       for (const b of d.buttons) {
-        ui.button(bx, y + h - btnH + 8, bw, 60, b.label, () => {
+        ui.button(bx, y + h - btnH + 10, bw, 76, b.label, () => {
           if (!b.keep) this.closeDialog(d);
           sound.sfx('sfx_click');
           if (b.onTap) b.onTap();
-        }, { style: b.style, disabled: b.disabled });
+        }, { style: b.style, disabled: b.disabled, size: n > 2 ? 26 : 30 });
         bx += bw + gap;
       }
     }
   }
 
   renderToasts(ctx) {
-    let y = this.H - 230 - (this.toasts.length - 1) * 58;
+    let y = this.H * 0.4 - (this.toasts.length - 1) * 70;
     for (const t of this.toasts) {
       const a = t.t < 0.2 ? t.t / 0.2 : t.t > 2.3 ? (2.8 - t.t) / 0.5 : 1;
       ctx.globalAlpha = Math.max(0, a);
-      ctx.font = font(24, true);
-      const w = ctx.measureText(t.text).width + 50;
+      ctx.font = font(28, true);
+      let text = t.text;
+      while (ctx.measureText(text).width > this.W - 110 && text.length > 2) text = text.slice(0, -1);
+      if (text !== t.text) text += '…';
+      const w = ctx.measureText(text).width + 56;
       const x = (this.W - w) / 2;
       ctx.fillStyle = t.color === 'red' ? 'rgba(124, 36, 20, 0.92)' : t.color === 'green' ? 'rgba(50, 90, 40, 0.92)' : 'rgba(58, 38, 20, 0.9)';
-      this.ui.roundRect(x, y, w, 48, 24);
+      this.ui.roundRect(x, y, w, 58, 29);
       ctx.fill();
       ctx.fillStyle = C.btnText;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(t.text, this.W / 2, y + 25);
-      y += 58;
+      ctx.fillText(text, this.W / 2, y + 30);
+      y += 70;
     }
     ctx.globalAlpha = 1;
   }

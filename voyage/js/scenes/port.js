@@ -1,5 +1,5 @@
 // 港口画面
-import { C, font } from '../theme.js';
+import { C } from '../theme.js';
 import { fmt, dateText, randInt } from '../util.js';
 import { PORT_BY_ID, REGIONS } from '../data/ports.js';
 import { sound } from '../assets.js';
@@ -47,78 +47,104 @@ export class PortScene {
   render(ctx) {
     const g = this.game, ui = g.ui, s = g.state, W = g.W, H = g.H, sf = g.safe;
     const port = this.port;
-    drawPortScene(ctx, W, H, port, this.t, s.fleet[0] && s.fleet[0].type);
+
+    // 从底部往上排布界面
+    const bottomY = H - sf.b - 86;
+    const statusY = bottomY - 120;
+    const departY = statusY - 128;
+    const row2Y = departY - 128;
+    const row1Y = row2Y - 128;
+    const descW = W - 48 - 36;
+    const descH = ui.textWrap(port.desc, 0, 0, descW, { size: 26, draw: false }) + 30;
+    let illusH = row1Y - 24 - descH - 16;
+    const showDesc = illusH >= 380;
+    if (!showDesc) illusH = row1Y - 24;
+
+    // 港口插画
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, W, illusH);
+    ctx.clip();
+    drawPortScene(ctx, W, illusH, port, this.t, s.fleet[0] && s.fleet[0].type);
+    ctx.restore();
+    // 下方木纹底板
+    ctx.fillStyle = C.parchmentDark;
+    ctx.fillRect(0, illusH, W, H - illusH);
+    ctx.fillStyle = C.wood;
+    ctx.fillRect(0, illusH - 4, W, 8);
 
     // 港口名牌
-    ctx.fillStyle = 'rgba(242, 230, 196, 0.92)';
-    ui.roundRect(sf.l, 14, 330, 92, 12);
+    const nameW = Math.max(360, ui.measure(port.name, 46, true) + 60);
+    ctx.fillStyle = 'rgba(242, 230, 196, 0.93)';
+    ui.roundRect(24, sf.t + 8, nameW, 142, 14);
     ctx.fill();
     ctx.strokeStyle = C.wood;
     ctx.lineWidth = 3;
     ctx.stroke();
-    ui.text(port.name, sf.l + 20, 46, { size: 36, bold: true });
-    ui.text(`${REGIONS[port.region].name} · ${SIZE_NAME[port.size]}`, sf.l + 20 + ui.measure(port.name, 36, true) + 16, 50, { size: 20, color: C.inkSoft });
-    ui.text(dateText(s.day), sf.l + 20, 84, { size: 20, color: C.inkSoft });
+    ui.text(port.name, 46, sf.t + 46, { size: 46, bold: true });
+    ui.text(`${REGIONS[port.region].name} · ${SIZE_NAME[port.size]}`, 46, sf.t + 92, { size: 24, color: C.inkSoft });
+    ui.text(dateText(s.day), 46, sf.t + 126, { size: 24, color: C.inkSoft });
 
-    // 右上：金币与菜单
-    ctx.fillStyle = 'rgba(242, 230, 196, 0.92)';
-    ui.roundRect(W - sf.r - 300, 14, 300, 56, 12);
+    // 金币
+    const goldText = `${fmt(s.gold)} 金币`;
+    const gw = ui.measure(goldText, 32, true) + 44;
+    ctx.fillStyle = 'rgba(242, 230, 196, 0.93)';
+    ui.roundRect(W - 24 - gw, sf.t + 8, gw, 64, 14);
     ctx.fill();
     ctx.strokeStyle = C.wood;
     ctx.lineWidth = 3;
     ctx.stroke();
-    ui.text(`${fmt(s.gold)} 金币`, W - sf.r - 84, 43, { size: 26, bold: true, color: C.gold, align: 'right' });
-    ui.button(W - sf.r - 72, 20, 62, 44, '≡', () => openMenu(g), { size: 28 });
+    ui.text(goldText, W - 24 - gw / 2, sf.t + 41, { size: 32, bold: true, color: C.gold, align: 'center' });
 
     // 港口简介
-    ctx.fillStyle = 'rgba(242, 230, 196, 0.85)';
-    const dw = Math.min(460, W * 0.38);
-    const th = ui.textWrap(port.desc, 0, 0, dw - 32, { size: 20, draw: false });
-    ui.roundRect(sf.l, 116, dw, th + 24, 10);
-    ctx.fill();
-    ui.textWrap(port.desc, sf.l + 16, 128, dw - 32, { size: 20, color: C.ink });
+    if (showDesc) {
+      ctx.fillStyle = 'rgba(242, 230, 196, 0.9)';
+      ui.roundRect(24, illusH + 20, W - 48, descH, 12);
+      ctx.fill();
+      ui.textWrap(port.desc, 42, illusH + 34, descW, { size: 26, color: C.ink });
+    }
 
-    // 设施按钮
-    const bx = W - sf.r - 230, bw = 230, bh = 66;
-    let by = 88;
+    // 设施（2×2）
+    const bw = (W - 48 - 20) / 2, bh = 112;
     const fac = [
       ['交易所', '买卖货物', () => g.openPanel(marketPanel(g, port.id))],
       ['造船厂', port.shipyard.length ? '买船 · 修船' : '修船', () => g.openPanel(shipyardPanel(g, port.id))],
       ['酒馆', '水手 · 委托 · 情报', () => g.openPanel(tavernPanel(g, port.id))],
       ['补给所', '粮食 · 淡水', () => g.openPanel(supplyPanel(g, port.id))],
     ];
-    for (const [name, sub, fn] of fac) {
-      ui.button(bx, by, bw, bh, name, () => {
+    fac.forEach(([name, sub, fn], i) => {
+      const x = 24 + (i % 2) * (bw + 20), y = i < 2 ? row1Y : row2Y;
+      ui.button(x, y, bw, bh, name, () => {
         sound.sfx('sfx_click');
         fn();
-      }, { size: 28, sub });
-      by += bh + 12;
-    }
-    ui.button(bx, by + 6, bw, bh + 6, '出 航', () => this.depart(), { style: 'primary', size: 32 });
+      }, { size: 36, sub });
+    });
+    ui.button(24, departY, W - 48, 112, '出 航', () => this.depart(), { style: 'primary', size: 42 });
 
-    // 底部状态栏
+    // 状态栏
     const st = fleetStats(s);
     const days = supplyDays(s);
-    const barY = H - 64 - sf.b + 8;
-    ctx.fillStyle = 'rgba(58, 38, 20, 0.82)';
-    ui.roundRect(sf.l, barY, W - sf.l - sf.r - 250, 56, 12);
+    ctx.fillStyle = 'rgba(58, 38, 20, 0.88)';
+    ui.roundRect(24, statusY, W - 48, 104, 14);
     ctx.fill();
+    ui.text(`${titleOf(s)} ${s.name}`, 44, statusY + 30, { size: 26, bold: true, color: C.btnText, maxW: W - 100 });
     const items = [
-      `${titleOf(s)} ${s.name}`,
-      `船员 ${s.crew}/${st.maxCrew}`,
-      `补给 ${days} 天`,
-      `船舱 ${holdUsed(s)}/${st.hold}`,
-      `耐久 ${Math.round((st.dur / st.maxDur) * 100)}%`,
+      [`船员 ${s.crew}/${st.maxCrew}`, s.crew < st.minCrew],
+      [`补给 ${days} 天`, days < 10],
+      [`船舱 ${holdUsed(s)}/${st.hold}`, false],
+      [`耐久 ${Math.round((st.dur / st.maxDur) * 100)}%`, st.dur / st.maxDur < 0.5],
     ];
-    let ix = sf.l + 18;
-    ctx.font = font(21, true);
-    items.forEach((t, i) => {
-      const warn = (i === 1 && s.crew < st.minCrew) || (i === 2 && days < 10) || (i === 4 && st.dur / st.maxDur < 0.5);
-      ui.text(t, ix, barY + 29, { size: 21, bold: true, color: warn ? '#ffb199' : C.btnText });
-      ix += ui.measure(t, 21, true) + 28;
-    });
-    ui.button(sf.l, barY - 62, 120, 50, '船队', () => g.openPanel(fleetPanel(g)), { size: 22, style: 'light' });
-    ui.button(sf.l + 132, barY - 62, 120, 50, '日志', () => g.openPanel(logPanel(g)), { size: 22, style: 'light' });
+    let ix = 44;
+    for (const [t, warn] of items) {
+      ui.text(t, ix, statusY + 74, { size: 25, bold: true, color: warn ? '#ffb199' : C.btnText });
+      ix += ui.measure(t, 25, true) + 26;
+    }
+
+    // 底部按钮
+    const sw = (W - 48 - 32) / 3;
+    ui.button(24, bottomY, sw, 76, '船队', () => g.openPanel(fleetPanel(g)), { size: 30, style: 'light' });
+    ui.button(24 + sw + 16, bottomY, sw, 76, '日志', () => g.openPanel(logPanel(g)), { size: 30, style: 'light' });
+    ui.button(24 + (sw + 16) * 2, bottomY, sw, 76, '菜单', () => openMenu(g), { size: 30, style: 'light' });
   }
 
   depart() {

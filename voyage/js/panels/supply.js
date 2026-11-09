@@ -42,37 +42,43 @@ export function supplyPanel(game, portId) {
   P.render = (ui, ctx, x, y, w, h) => {
     const s = game.state;
     const pr = supplyPrices(portId);
-    const colW = Math.min(600, w * 0.62);
-    drawNpc(ctx, 'npc_supply', x + w - (w - colW) / 2, y + h, h * 0.85, '#2f5d7c');
-    let cy = y + 14;
-    ui.text(`金币 ${fmt(s.gold)}`, x + w - 50, y + 14, { size: 24, bold: true, color: C.gold, align: 'right' });
-    ui.text(`粮食 ${Math.floor(s.food)} 箱 · 淡水 ${Math.floor(s.water)} 箱`, x, cy, { size: 26, bold: true });
+    let cy = y + 20;
+    ui.text(`金币 ${fmt(s.gold)}`, x + w, cy, { size: 28, bold: true, color: C.gold, align: 'right' });
+    ui.text(`粮食 ${Math.floor(s.food)} 箱`, x, cy, { size: 34, bold: true });
+    cy += 50;
+    ui.text(`淡水 ${Math.floor(s.water)} 箱`, x, cy, { size: 34, bold: true });
+    ui.text(`可维持 ${supplyDays(s)} 天`, x + w, cy, { size: 30, bold: true, color: supplyDays(s) < 10 ? C.red : C.green, align: 'right' });
+    cy += 50;
+    ui.text(`船员 ${s.crew} 人，每天消耗粮食、淡水各 ${dailyUse(s).toFixed(1)} 箱`, x, cy, { size: 25, color: C.inkSoft, maxW: w });
     cy += 38;
-    ui.text(`船员 ${s.crew} 人，每天消耗粮食、淡水各 ${dailyUse(s).toFixed(1)} 箱，现有补给可维持 ${supplyDays(s)} 天`, x, cy, { size: 20, color: C.inkSoft, maxW: colW });
+    ui.text(`本港价格：粮食 ${pr.food}、淡水 ${pr.water} 金币/箱`, x, cy, { size: 25, color: C.inkSoft, maxW: w });
+    cy += 38;
+    ui.text(`船舱 ${holdUsed(s)} / ${fleetStats(s).hold}（补给和货物共用）`, x, cy, { size: 25, color: C.inkSoft, maxW: w });
+    cy += 60;
+    ui.text('补足到可航行：', x, cy, { size: 30, bold: true });
     cy += 30;
-    ui.text(`本港价格：粮食 ${pr.food} 金币/箱，淡水 ${pr.water} 金币/箱 · 船舱 ${holdUsed(s)}/${fleetStats(s).hold}`, x, cy, { size: 20, color: C.inkSoft, maxW: colW });
-    cy += 46;
-    ui.text('补足到可航行：', x, cy, { size: 24, bold: true });
-    cy += 30;
-    const bw = (colW - 5 * 10) / 6;
+    const bw = (w - 2 * 16) / 3;
     OPTIONS.forEach((d, i) => {
-      ui.button(x + i * (bw + 10), cy, bw, 52, `${d}天`, () => (P.days = d), { size: 22, style: P.days === d ? 'primary' : 'light' });
+      ui.button(x + (i % 3) * (bw + 16), cy + Math.floor(i / 3) * 88, bw, 74, `${d} 天`, () => (P.days = d), { size: 30, style: P.days === d ? 'primary' : 'light' });
     });
-    cy += 76;
+    cy += 88 * 2 + 30;
     const plan = supplyPlan(s, portId, P.days);
     const need = Math.ceil(dailyUse(s) * P.days);
-    ui.text(`需购入：粮食 ${plan.food} 箱、淡水 ${plan.water} 箱`, x, cy, { size: 24 });
-    cy += 34;
-    ui.text(`费用 ${fmt(plan.cost)} 金币`, x, cy, { size: 26, bold: true, color: C.gold });
+    ui.text(`需购入：粮食 ${plan.food} 箱、淡水 ${plan.water} 箱`, x, cy, { size: 28 });
+    cy += 46;
+    ui.text(`费用 ${fmt(plan.cost)} 金币`, x, cy, { size: 32, bold: true, color: C.gold });
     if ((plan.food < need - s.food - 0.5 || plan.water < need - s.water - 0.5) && (plan.food + plan.water > 0 || holdFree(s) === 0))
-      ui.text(holdFree(s) < need * 2 ? '船舱空间不足，只能买这么多' : '金币不足，只能买这么多', x + 260, cy, { size: 20, color: C.red });
-    ui.button(x, y + h - 66, colW - 20, 62, '购买补给', () => {
+      ui.text(holdFree(s) < need * 2 ? '船舱空间不足，只能买这么多' : '金币不足，只能买这么多', x + w, cy, { size: 24, color: C.red, align: 'right' });
+    const by = y + h - 90;
+    const npcTop = cy + 30, npcH = Math.min(440, by - 20 - npcTop);
+    if (npcH > 160) drawNpc(ctx, 'npc_supply', x + w / 2, by - 20, npcH, '#2f5d7c');
+    ui.button(x, by, w, 90, '购买补给', () => {
       s.food += plan.food;
       s.water += plan.water;
       s.gold -= plan.cost;
       game.toast(`补给完成，可航行 ${supplyDays(s)} 天`, 'green');
       sound.sfx('sfx_coin');
-    }, { style: 'primary', size: 28, disabled: plan.food + plan.water <= 0 });
+    }, { style: 'primary', size: 36, disabled: plan.food + plan.water <= 0 });
   };
   return P;
 }

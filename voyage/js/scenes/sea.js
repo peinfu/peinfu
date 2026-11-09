@@ -1,5 +1,5 @@
 // 航海画面：航海图、航线规划、自动航行、随机事件
-import { C, font } from '../theme.js';
+import { C } from '../theme.js';
 import { fmt, dateText, chance, clamp } from '../util.js';
 import { project } from '../data/world.js';
 import { PORT_BY_ID } from '../data/ports.js';
@@ -329,7 +329,7 @@ export class SeaScene {
       if (hx || hy) this.angle = Math.atan2(-hy, hx);
     }
     const bob = Math.sin(this.t * 2) * 1.5;
-    drawMapShip(ctx, sx, sy + bob, this.angle, 34, C.red);
+    drawMapShip(ctx, sx, sy + bob, this.angle, 44, C.red);
 
     this.drawHud(ctx, ui, s, W, H, sf);
   }
@@ -339,8 +339,8 @@ export class SeaScene {
     if (pts.length < 2) return;
     ctx.save();
     ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    if (ctx.setLineDash) ctx.setLineDash([10, 8]);
+    ctx.lineWidth = 4;
+    if (ctx.setLineDash) ctx.setLineDash([14, 10]);
     ctx.beginPath();
     pts.forEach((p, i) => {
       const [x, y] = chart.lonLatToScreen(p[0], p[1]);
@@ -353,7 +353,7 @@ export class SeaScene {
     const [ex, ey] = chart.lonLatToScreen(end[0], end[1]);
     ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.arc(ex, ey, 7, 0, Math.PI * 2);
+    ctx.arc(ex, ey, 9, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
@@ -362,35 +362,35 @@ export class SeaScene {
     const g = this.game;
     const st = fleetStats(s);
 
-    // 左上：日期、金币、风
-    ctx.fillStyle = 'rgba(242, 230, 196, 0.93)';
-    ui.roundRect(sf.l, 12, 390, 88, 12);
+    // 顶部信息条：日期、金币、风
+    const topY = sf.t + 8;
+    ctx.fillStyle = 'rgba(242, 230, 196, 0.94)';
+    ui.roundRect(24, topY, W - 48, 108, 14);
     ctx.fill();
+    ctx.strokeStyle = C.wood;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ui.text(dateText(s.day), 46, topY + 34, { size: 30, bold: true });
+    ui.text(`${fmt(s.gold)} 金币`, 46, topY + 76, { size: 30, bold: true, color: C.gold });
+    const w = currentWind(s);
+    const wx = W - 24 - 64, wy = topY + 54;
     ctx.strokeStyle = C.wood;
     ctx.lineWidth = 2.5;
-    ctx.stroke();
-    ui.text(dateText(s.day), sf.l + 16, 36, { size: 22, bold: true });
-    ui.text(`${fmt(s.gold)} 金币`, sf.l + 16, 72, { size: 22, bold: true, color: C.gold });
-    const w = currentWind(s);
-    const wx = sf.l + 340, wy = 56;
-    ctx.strokeStyle = C.wood;
-    ctx.lineWidth = 2;
     ctx.fillStyle = C.parchment;
     ctx.beginPath();
-    ctx.arc(wx, wy, 32, 0, Math.PI * 2);
+    ctx.arc(wx, wy, 40, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    const ang = Math.atan2(-w.y, w.x);
     ctx.save();
     ctx.translate(wx, wy);
-    ctx.rotate(ang);
+    ctx.rotate(Math.atan2(-w.y, w.x));
     ctx.fillStyle = C.blue;
     ctx.beginPath();
-    const L = 10 + w.s * 16;
+    const L = 12 + w.s * 20;
     ctx.moveTo(L, 0);
-    ctx.lineTo(-L * 0.6, -8);
+    ctx.lineTo(-L * 0.6, -10);
     ctx.lineTo(-L * 0.3, 0);
-    ctx.lineTo(-L * 0.6, 8);
+    ctx.lineTo(-L * 0.6, 10);
     ctx.closePath();
     ctx.fill();
     ctx.restore();
@@ -402,26 +402,25 @@ export class SeaScene {
       const cos = (hx * w.x + hy * w.y) / len;
       rel = cos > 0.5 ? '顺风' : cos < -0.3 ? '逆风' : '侧风';
     }
-    ui.text(`${wn.level}${wn.dir}`, wx - 44, 36, { size: 20, align: 'right', color: C.blue, bold: true });
-    if (rel) ui.text(rel, wx - 44, 72, { size: 20, align: 'right', color: rel === '逆风' ? C.red : rel === '顺风' ? C.green : C.inkSoft, bold: true });
+    ui.text(`${wn.level}${wn.dir}`, wx - 56, topY + 34, { size: 28, align: 'right', color: C.blue, bold: true });
+    if (rel) ui.text(rel, wx - 56, topY + 76, { size: 28, align: 'right', color: rel === '逆风' ? C.red : rel === '顺风' ? C.green : C.inkSoft, bold: true });
 
-    // 右上按钮
-    const bw = 96;
-    ui.button(W - sf.r - 72, 16, 62, 52, '≡', () => openMenu(g), { size: 28 });
-    ui.button(W - sf.r - 72 - 10 - bw, 16, bw, 52, '日志', () => g.openPanel(logPanel(g)), { size: 22, style: 'light' });
-    ui.button(W - sf.r - 72 - 20 - bw * 2, 16, bw, 52, '船队', () => g.openPanel(fleetPanel(g)), { size: 22, style: 'light' });
+    // 功能按钮（顶部信息条下方）
+    const by = topY + 124, bw = 128, bh = 68;
+    ui.button(W - 24 - bw, by, bw, bh, '菜单', () => openMenu(g), { size: 28 });
+    ui.button(W - 24 - bw * 2 - 12, by, bw, bh, '日志', () => g.openPanel(logPanel(g)), { size: 28, style: 'light' });
+    ui.button(W - 24 - bw * 3 - 24, by, bw, bh, '船队', () => g.openPanel(fleetPanel(g)), { size: 28, style: 'light' });
 
     // 右侧缩放与定位
-    const zx = W - sf.r - 62;
-    ui.button(zx, 150, 52, 52, '+', () => g.chart.zoomAt(W / 2, H / 2, 1.3), { size: 30, style: 'light' });
-    ui.button(zx, 212, 52, 52, '−', () => g.chart.zoomAt(W / 2, H / 2, 1 / 1.3), { size: 30, style: 'light' });
-    ui.button(zx, 274, 52, 52, '◎', () => {
+    const zx = W - 24 - 76, zy = by + bh + 24;
+    ui.button(zx, zy, 76, 76, '+', () => g.chart.zoomAt(W / 2, H / 2, 1.3), { size: 40, style: 'light' });
+    ui.button(zx, zy + 88, 76, 76, '−', () => g.chart.zoomAt(W / 2, H / 2, 1 / 1.3), { size: 40, style: 'light' });
+    ui.button(zx, zy + 176, 76, 76, '◎', () => {
       this.follow = true;
-    }, { size: 26, style: this.follow ? 'light' : undefined });
+    }, { size: 34, style: this.follow ? 'light' : undefined });
 
-    // 底部状态
+    // 底部状态栏
     const days = supplyDays(s);
-    const barY = H - sf.b - 60;
     const items = [
       [`船员 ${s.crew}`, s.crew < st.minCrew],
       [`补给 ${days} 天`, days < 7],
@@ -429,67 +428,66 @@ export class SeaScene {
       [`耐久 ${Math.round((st.dur / st.maxDur) * 100)}%`, st.dur / st.maxDur < 0.4],
     ];
     if (s.voyage) items.push([`航速 ${(currentSpeed(s) / 24).toFixed(1)} 节`, false]);
-    ctx.font = font(20, true);
-    let totalW = 24;
-    for (const [t] of items) totalW += ctx.measureText(t).width + 26;
-    ctx.fillStyle = 'rgba(58, 38, 20, 0.82)';
-    ui.roundRect(sf.l, barY, totalW, 48, 12);
+    const statusH = 64;
+    const statusY = H - sf.b - statusH - 8;
+    ctx.fillStyle = 'rgba(58, 38, 20, 0.86)';
+    ui.roundRect(24, statusY, W - 48, statusH, 14);
     ctx.fill();
-    let ix = sf.l + 16;
+    const size = items.length > 4 ? 23 : 25;
+    let total = 0;
+    for (const [t] of items) total += ui.measure(t, size, true);
+    const gap = (W - 48 - 32 - total) / Math.max(1, items.length - 1);
+    let ix = 40;
     for (const [t, warn] of items) {
-      ui.text(t, ix, barY + 25, { size: 20, bold: true, color: warn ? '#ffb199' : C.btnText });
-      ix += ui.measure(t, 20, true) + 26;
+      ui.text(t, ix, statusY + statusH / 2 + 1, { size, bold: true, color: warn ? '#ffb199' : C.btnText });
+      ix += ui.measure(t, size, true) + gap;
     }
 
-    // 底部操作区
-    const ax = sf.l + totalW + 16, aw = W - sf.r - ax;
+    // 操作面板（状态栏上方）
+    const px = 24, pw = W - 48;
+    const panel = (y, h) => {
+      ctx.fillStyle = 'rgba(242, 230, 196, 0.96)';
+      ui.roundRect(px, y, pw, h, 14);
+      ctx.fill();
+      ctx.strokeStyle = C.wood;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    };
     if (this.pending) {
       const pd = this.pending;
       const short = supplyDays(s) < pd.days;
-      ctx.fillStyle = 'rgba(242, 230, 196, 0.95)';
-      const pw = Math.min(aw, 620), px = W - sf.r - pw;
-      ui.roundRect(px, barY - 70, pw, 118, 12);
-      ctx.fill();
-      ctx.strokeStyle = C.wood;
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ui.text(`前往 ${pd.label}`, px + 18, barY - 44, { size: 24, bold: true, maxW: pw - 300 });
-      ui.text(`${fmt(pd.plan.nm)} 海里 · 约 ${pd.days} 天`, px + 18, barY - 12, { size: 20, color: C.inkSoft });
-      ui.text(short ? `补给只够 ${supplyDays(s)} 天！` : `补给可维持 ${supplyDays(s)} 天`, px + 18, barY + 22, { size: 20, bold: short, color: short ? C.red : C.green });
-      ui.button(px + pw - 266, barY - 54, 120, 86, '取消', () => (this.pending = null), { size: 24, style: 'light' });
-      ui.button(px + pw - 136, barY - 54, 120, 86, '出航', () => this.confirmPending(), { size: 28, style: 'primary' });
+      const ph = 200, py = statusY - ph - 14;
+      panel(py, ph);
+      ui.text(`前往 ${pd.label}`, px + 24, py + 40, { size: 34, bold: true, maxW: pw - 48 });
+      ui.text(`${fmt(pd.plan.nm)} 海里 · 约 ${pd.days} 天`, px + 24, py + 86, { size: 26, color: C.inkSoft });
+      ui.text(short ? `补给只够 ${supplyDays(s)} 天！` : `补给可维持 ${supplyDays(s)} 天`, px + pw - 24, py + 86, { size: 26, bold: short, color: short ? C.red : C.green, align: 'right' });
+      const b2 = (pw - 48 - 20) / 2;
+      ui.button(px + 24, py + 114, b2, 72, '取消', () => (this.pending = null), { size: 30, style: 'light' });
+      ui.button(px + 24 + b2 + 20, py + 114, b2, 72, '出航', () => this.confirmPending(), { size: 34, style: 'primary' });
     } else if (s.voyage) {
       const v = s.voyage;
       const label = v.dest.type === 'port' ? PORT_BY_ID[v.dest.id].name : '标记的海域';
       const left = Math.max(1, Math.ceil(remainingNm(s) / Math.max(20, currentSpeed(s))));
-      const pw = Math.min(aw, 560), px = W - sf.r - pw;
-      ctx.fillStyle = 'rgba(242, 230, 196, 0.95)';
-      ui.roundRect(px, barY - 10, pw, 58, 12);
-      ctx.fill();
-      ctx.strokeStyle = C.wood;
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ui.text(this.becalm > 0 ? '无风，船队在漂流…' : `前往 ${label} · 约 ${left} 天`, px + 16, barY + 19, { size: 21, bold: true, maxW: pw - 250 });
+      const ph = 168, py = statusY - ph - 14;
+      panel(py, ph);
+      ui.text(this.becalm > 0 ? '无风，船队在漂流……' : `前往 ${label}`, px + 24, py + 40, { size: 32, bold: true, maxW: pw - 48 });
+      if (!(this.becalm > 0)) ui.text(`约 ${left} 天`, px + pw - 24, py + 40, { size: 28, color: C.inkSoft, align: 'right' });
       const sp = s.settings.speed || 1;
-      ui.button(px + pw - 232, barY - 4, 100, 46, `${sp}倍速`, () => {
+      const b2 = (pw - 48 - 20) / 2;
+      ui.button(px + 24, py + 80, b2, 72, `${sp} 倍速`, () => {
         s.settings.speed = SPEEDS[(SPEEDS.indexOf(sp) + 1) % SPEEDS.length];
-      }, { size: 21, style: 'light' });
-      ui.button(px + pw - 122, barY - 4, 108, 46, '停船', () => {
+      }, { size: 30, style: 'light' });
+      ui.button(px + 24 + b2 + 20, py + 80, b2, 72, '停船', () => {
         s.voyage = null;
         g.toast('船队停船待命');
-      }, { size: 22 });
+      }, { size: 30 });
     } else {
       const here = s.port || nearbyPort(s);
-      const pw = Math.min(aw, 560), px = W - sf.r - pw;
-      ctx.fillStyle = 'rgba(242, 230, 196, 0.95)';
-      ui.roundRect(px, barY - 10, pw, 58, 12);
-      ctx.fill();
-      ctx.strokeStyle = C.wood;
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-      ui.text('点击港口或海面规划航线', px + 16, barY + 19, { size: 21, color: C.inkSoft, maxW: pw - 190 });
+      const ph = here ? 168 : 84, py = statusY - ph - 14;
+      panel(py, ph);
+      ui.text('点击港口或海面规划航线', px + pw / 2, py + 42, { size: 28, color: C.inkSoft, align: 'center' });
       if (here) {
-        ui.button(px + pw - 170, barY - 4, 156, 46, `进入${PORT_BY_ID[here].name}`, () => this.askEnter(here), { size: 21, style: 'primary' });
+        ui.button(px + 24, py + 80, pw - 48, 72, `进入${PORT_BY_ID[here].name}`, () => this.askEnter(here), { size: 32, style: 'primary' });
       }
     }
   }
