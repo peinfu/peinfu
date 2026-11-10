@@ -6,8 +6,8 @@ import { drawSideShip } from '../render/sprites.js';
 import { img, sound } from '../assets.js';
 import { HELP_TEXT } from './help.js';
 
-// 游戏名：大航海·启航
-const TITLE_MAIN = '大 航 海';
+// 游戏名：新航海时代 启航（需与微信后台登记的名称一致）
+const TITLE_MAIN = '新航海时代';
 const TITLE_SUB = '启 航';
 
 export class TitleScene {
@@ -62,7 +62,10 @@ export class TitleScene {
     ctx.lineWidth = 2;
     ui.roundRect(cx - 288, ty + 12, 576, 296, 14);
     ctx.stroke();
-    ctx.font = font(116, true);
+    // 字号随标题长度自动缩小，保证放得进标题牌
+    ctx.font = font(100, true);
+    const titleSize = Math.min(116, (100 * 520) / ctx.measureText(TITLE_MAIN).width);
+    ctx.font = font(titleSize, true);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = C.redDark;

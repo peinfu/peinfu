@@ -11,7 +11,7 @@ import { PortScene } from './scenes/port.js';
 import { SeaScene } from './scenes/sea.js';
 import { BattleScene } from './scenes/battle.js';
 
-export const GAME_TITLE = '大航海·启航';
+export const GAME_TITLE = '新航海时代 启航';
 export const DESIGN_W = 750; // 设计宽度（逻辑像素，与小程序 rpx 一致），高度随屏幕比例变化
 
 export class Game {

@@ -1,4 +1,4 @@
-# 大航海·启航（微信小游戏）
+# 新航海时代 启航（微信小游戏）
 
 大航海题材的原创微信小游戏。玩家扮演十六世纪初的一名年轻船长，在欧洲、地中海、非洲和印度洋之间跑商、探索未知海域、与海盗交战，寻找绕过非洲通往印度和香料群岛的航路。
 
@@ -43,7 +43,7 @@ python3 -m http.server 8000
 ```bash
 cd tools
 npm install
-npm run web      # 输出 dist/dahanghai-qihang-web.html
+npm run web      # 输出 dist/xinhanghai-qihang-web.html
 ```
 
 ## 目录结构
